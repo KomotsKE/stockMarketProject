@@ -1,3 +1,5 @@
+import src.models 
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -5,7 +7,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from src.auth.models.user import UserORM
+
 from src.dataBase.base import Base
 from src.config import settings
 config = context.config
