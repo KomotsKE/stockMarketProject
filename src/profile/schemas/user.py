@@ -12,5 +12,6 @@ class User(BaseModel):
     role: Role
     api_key: str
 
+
 class NewUser(BaseModel):
     name: str = Field(min_length=3)

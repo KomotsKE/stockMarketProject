@@ -1,11 +1,8 @@
-import enum
 import uuid
-
-from sqlalchemy import String, Enum, text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 
-from src.auth.schemas.user import Role
+from src.profile.schemas.user import Role
 from src.dataBase.base import Base
 
 class UserORM(Base):
