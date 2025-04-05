@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from src.auth.api.user import auth_router
+from src.profile.api.user import auth_router
 from src.stockMarket.api.instrument import instrument_router
 
 

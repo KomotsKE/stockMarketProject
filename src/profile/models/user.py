@@ -1,9 +1,11 @@
 import uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
+from typing import List
 
 from src.profile.schemas.user import Role
 from src.dataBase.base import Base
+from src.profile.models.balance import BalanceORM
 
 class UserORM(Base):
     __tablename__ = 'user'
@@ -12,5 +14,7 @@ class UserORM(Base):
     name: Mapped[str]
     role: Mapped[Role]
     api_key: Mapped[str]
+    balance: Mapped[List["BalanceORM"]] = relationship(back_populates="user")
+    
 
 

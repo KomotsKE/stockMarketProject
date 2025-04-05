@@ -1,6 +1,6 @@
 from src.stockMarket.schemas.instrument import Instrument, OK
 from src.stockMarket.models.instrument import InstrumentORM
-from src.auth.api.user import is_admin
+from src.profile.api.user import is_admin
 from src.dataBase.session import async_session_factory
 from sqlalchemy import select
 from fastapi import APIRouter, HTTPException, Depends
