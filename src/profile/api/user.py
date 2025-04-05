@@ -4,8 +4,8 @@ from sqlalchemy import select
 
 from src.config import settings
 
-from src.auth.schemas.user import User, NewUser, Role
-from src.auth.models.user import UserORM
+from src.profile.schemas.user import User, NewUser, Role
+from src.profile.models.user import UserORM
 from src.dataBase.session import async_session_factory
 
 import uuid
