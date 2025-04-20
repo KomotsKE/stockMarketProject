@@ -1,11 +1,13 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from src.profile.schemas.user import Role
 from src.dataBase.base import Base
-from src.profile.models.balance import BalanceORM
+
+if TYPE_CHECKING:
+    from src.profile.models.balance import BalanceORM
 
 class UserORM(Base):
     __tablename__ = 'user'

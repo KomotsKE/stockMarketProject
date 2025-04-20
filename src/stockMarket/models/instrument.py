@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
 from src.dataBase.base import Base
-from src.profile.models.balance import BalanceORM
+
+if TYPE_CHECKING:
+    from src.profile.models.balance import BalanceORM
 
 class InstrumentORM(Base):
     __tablename__ = "instrument"
