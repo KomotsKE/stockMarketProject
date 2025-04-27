@@ -23,7 +23,7 @@ async def get_user_by_token(token : str = Header(alias='auth')) -> User:
 
 
 async def is_admin(user: User = Depends(get_user_by_token)) -> None:
-    if user.role != Role.admin:
+    if user.role != Role.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Not enough rights')
 
 

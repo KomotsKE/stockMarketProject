@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import datetime
+from typing import List
 
 from src.dataBase.session import async_session_factory
 from src.stockMarket.models.order import OrderORM
@@ -28,7 +29,7 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
     order = OrderORM(
         id = uuid4(),
         type=order_body.type,
-        status=OrderStatus.new,
+        status=OrderStatus.NEW,
         user_id= user.id,
         timestamp = datetime.datetime.now(),
         direction=order_body.direction,
@@ -43,9 +44,9 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
     
     return CreateOrderResponse(order_id=order.id)
 
-@order_router.get("", response_model=list[LimitOrder | MarketOrder])
-async def list_orders(user: User = Depends(get_user_by_token)) -> list[LimitOrder | MarketOrder]:
-    response : list[LimitOrder | MarketOrder] = []
+@order_router.get("", response_model=List[LimitOrder | MarketOrder])
+async def list_orders(user: User = Depends(get_user_by_token)) -> List[LimitOrder | MarketOrder]:
+    response : List[LimitOrder | MarketOrder] = []
     async with async_session_factory() as session:
         query = select(OrderORM).where(OrderORM.user_id == user.id)
         result = await session.execute(query)
@@ -58,7 +59,7 @@ async def list_orders(user: User = Depends(get_user_by_token)) -> list[LimitOrde
                 "timestamp": order.timestamp,
             }
             
-            if order.type == OrderType.market:
+            if order.type == OrderType.MARKET:
                 body = MarketOrderBody(
                     direction=order.direction,
                     ticker=order.ticker,
@@ -76,19 +77,23 @@ async def list_orders(user: User = Depends(get_user_by_token)) -> list[LimitOrde
                 
     return response
 
-@order_router.get("/{order_id}")
-async def get_order(order_id: UUID, user: User = Depends(get_user_by_token)):
+@order_router.get("/{order_id}", response_model=LimitOrder | MarketOrder)
+async def get_order(order_id: UUID, user: User = Depends(get_user_by_token)) -> LimitOrder | MarketOrder:
     async with async_session_factory() as session:
         query = select(OrderORM).where(OrderORM.id == order_id)
         result = await session.execute(query)
         order = result.scalar_one_or_none()
+
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+
         base_order_data = {
                 "id": order.id,
                 "status": order.status,
                 "user_id": order.user_id,
                 "timestamp": order.timestamp,
             }
-        if order.type == OrderType.market:
+        if order.type == OrderType.MARKET:
             body = MarketOrderBody(
                 direction=order.direction,
                 ticker=order.ticker,
@@ -117,10 +122,10 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         
-        if order.status in [OrderStatus.canclled, OrderStatus.exec]:
+        if order.status in [OrderStatus.CANCELLED, OrderStatus.EXEC]:
             raise HTTPException(status_code=400, detail="Cannot cancel order in current status")
         
-        order.status = OrderStatus.canclled
+        order.status = OrderStatus.CANCELLED
         await session.commit()
     
     return succesMessage

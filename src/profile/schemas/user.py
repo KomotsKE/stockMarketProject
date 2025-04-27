@@ -2,8 +2,8 @@ from enum import Enum
 from pydantic import BaseModel, UUID4, Field
 
 class Role(str, Enum):
-    admin = 'admin'
-    user = 'user'
+    ADMIN = 'ADMIN'
+    USER = 'USER'
 
 class User(BaseModel):
     id: UUID4

@@ -4,21 +4,21 @@ from pydantic import BaseModel, Field, UUID4
 from typing import List
 
 class OperationDirection(str, Enum):
-    buy = "BUY"
-    sell = "SELL"
+    BUY = "BUY"
+    SELL = "SELL"
 
 class OrderStatus(str, Enum):
-    new = "NEW"
-    exec = "EXECUTED"
-    part_exec = "PARTIALLY_EXECUTED"
-    canclled = "CANCELLED"
+    NEW = "NEW"
+    EXEC = "EXECUTED"
+    PART_EXEC = "PARTIALLY_EXECUTED"
+    CANCELLED = "CANCELLED"
 
 class OrderType(str, Enum):
-    market = "MARKET"
-    limit = "LIMIT"
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
     @classmethod
     def from_order(cls, order: 'OrderBody') -> 'OrderType':
-        return cls.limit if hasattr(order, 'price') and order.price is not None else cls.market
+        return cls.LIMIT if hasattr(order, 'price') and order.price is not None else cls.MARKET
 
 class OrderBody(BaseModel):
     direction : OperationDirection
@@ -46,14 +46,6 @@ class MarketOrder(Order):
 class LimitOrder(Order):
     body: LimitOrderBody
     filled: int = Field(default=0)
-
-class Level(BaseModel):
-    price: int
-    qty: int
-
-class L2OrderBook(BaseModel):
-    bid_levels : List[Level]
-    ask_levels : List[Level]
 
 class CreateOrderResponse(BaseModel):
     success: bool = Field(default=True)
