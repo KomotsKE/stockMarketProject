@@ -5,6 +5,7 @@ from typing import List, TYPE_CHECKING
 
 from src.profile.schemas.user import Role
 from src.dataBase.base import Base
+from src.stockMarket.models.order import OrderORM
 
 if TYPE_CHECKING:
     from src.profile.models.balance import BalanceORM
@@ -17,6 +18,7 @@ class UserORM(Base):
     role: Mapped[Role]
     api_key: Mapped[str]
     balance: Mapped[List["BalanceORM"]] = relationship(back_populates="user")
+    orders: Mapped[List["OrderORM"]] = relationship(back_populates="user")
     
 
 

@@ -13,3 +13,7 @@ class User(BaseModel):
 
 class NewUser(BaseModel):
     name: str = Field(min_length=3)
+
+class CreateOrderResponse(BaseModel):
+    succes: bool = Field(default=True)
+    order_id: UUID4

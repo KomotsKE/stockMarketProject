@@ -1,3 +1,4 @@
 from src.profile.models.user import UserORM
 from src.stockMarket.models.instrument import InstrumentORM
 from src.profile.models.balance import BalanceORM
+from src.stockMarket.models.order import OrderORM
