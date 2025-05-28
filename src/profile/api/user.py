@@ -2,7 +2,6 @@ import jwt
 import uuid
 from sqlalchemy import select
 from fastapi import Depends, HTTPException, Header , status, APIRouter
-
 from src.config import settings
 from src.profile.schemas.user import User, NewUser, Role
 from src.profile.models.user import UserORM
@@ -30,7 +29,7 @@ async def is_admin(user: User = Depends(get_user_by_token)) -> None:
 @auth_router.post('/register', tags=["public"])
 async def register_user(newUser: NewUser) -> User:
     token = jwt.encode(payload={"name": newUser.name}, key=settings.SECRET_JWT_KEY, algorithm='HS256')
-    user = UserORM(id=uuid.uuid4(),name=newUser.name, role='user', api_key = token)
+    user = UserORM(id=uuid.uuid4(),name=newUser.name, role=Role.USER, api_key = token)
     async with async_session_factory() as session:
         session.add(user)
         await session.commit()

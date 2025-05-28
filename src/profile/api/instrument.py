@@ -1,11 +1,12 @@
-from src.stockMarket.schemas.instrument import Instrument
-from src.stockMarket.models.instrument import InstrumentORM
+from src.profile.schemas.instrument import Instrument, Transaction
+from src.profile.models.instrument import InstrumentORM
 from src.profile.api.user import is_admin
 from src.dataBase.session import async_session_factory
 from sqlalchemy import select
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from src.public.schemas import succesMessage, OK
+from src.profile.models.balance import TransactionORM
 
 
 instrument_router = APIRouter(prefix="/api/v1")
@@ -34,3 +35,11 @@ async def del_instrument(ticker : str, rights: None = Depends(is_admin)) -> OK:
         await session.delete(instrument)
         await session.commit()
         return succesMessage
+
+@instrument_router.get("/public/transaction/{ticker}", tags=["public"])
+async def get_transaction_history(ticker : str, limit : int) -> List[Transaction]:
+    async with async_session_factory() as session:
+        query = select(TransactionORM).where(TransactionORM.ticker == ticker).order_by(TransactionORM.timestamp).limit(limit)
+        result = await session.execute(query)
+        transactions = result.scalars().all()
+        return transactions

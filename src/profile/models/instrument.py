@@ -5,7 +5,7 @@ from src.dataBase.base import Base
 if TYPE_CHECKING:
     from src.profile.models.balance import BalanceORM
     from src.stockMarket.models.order import OrderORM
-    from src.stockMarket.models.transaction import transactionORM
+    from src.profile.models.balance import TransactionORM
 
 class InstrumentORM(Base):
     __tablename__ = "instrument"
@@ -14,4 +14,4 @@ class InstrumentORM(Base):
     ticker: Mapped[str] = mapped_column(primary_key=True)
     balance: Mapped[List["BalanceORM"]] = relationship(back_populates="instrument")
     orders: Mapped[List["OrderORM"]] = relationship(back_populates="instrument")
-    transactions: Mapped[List["transactionORM"]] = relationship(back_populates="instrument")
+    transactions: Mapped[List["TransactionORM"]] = relationship(back_populates="instrument")

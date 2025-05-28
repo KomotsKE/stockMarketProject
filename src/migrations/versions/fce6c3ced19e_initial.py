@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('user',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('role', sa.Enum('admin', 'user', name='role'), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'USER', name='role'), nullable=False),
     sa.Column('api_key', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )

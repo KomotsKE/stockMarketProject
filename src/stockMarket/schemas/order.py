@@ -50,3 +50,11 @@ class LimitOrder(Order):
 class CreateOrderResponse(BaseModel):
     success: bool = Field(default=True)
     order_id: UUID4
+
+class Level(BaseModel):
+    price: int
+    qty: int
+
+class L2OrderBook(BaseModel):
+    bid_levels : List[Level]
+    ask_levels : List[Level]

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from src.profile.api.user import auth_router
-from src.stockMarket.api.instrument import instrument_router
+from src.profile.api.instrument import instrument_router
 from src.profile.api.balance import balance_router
 from src.stockMarket.api.order import order_router
 from src.stockMarket.api.market_order import market_order_router

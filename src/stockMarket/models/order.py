@@ -7,7 +7,7 @@ from datetime import datetime
 
 if TYPE_CHECKING:
     from src.profile.models.user import UserORM
-    from src.stockMarket.models.instrument import InstrumentORM
+    from profile.models.instrument import InstrumentORM
 
 from src.dataBase.base import Base
 from src.stockMarket.schemas.order import OrderType, OrderStatus, OperationDirection
