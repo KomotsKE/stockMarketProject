@@ -6,8 +6,8 @@ from datetime import datetime
 import uuid
 
 if TYPE_CHECKING:
-    from src.profile.models.user import UserORM
-    from profile.models.instrument import InstrumentORM
+    from src.dataBase.models.user import UserORM
+    from dataBase.models.instrument import InstrumentORM
 
 class BalanceORM(Base):
     __tablename__ = 'balance'

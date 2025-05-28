@@ -1,17 +1,16 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from uuid import UUID
 from sqlalchemy import select
-from src.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.profile.api.user import get_user_by_token, is_admin, UserORM
-from src.profile.schemas.user import User
-from src.profile.models.instrument import InstrumentORM
-from src.profile.api.instrument import get_instruments_list
-from src.profile.schemas.balance import BalanceTransaction
-from src.profile.models.balance import BalanceORM, TransactionORM
+from src.api.profile.user import get_user_by_token, is_admin, UserORM
+from src.schemas.user import User
+from src.dataBase.models.instrument import InstrumentORM
+from src.api.profile.instrument import get_instruments_list
+from src.schemas.balance import BalanceTransaction
+from src.dataBase.models.balance import BalanceORM, TransactionORM
 from src.dataBase.session import async_session_factory
-from src.public.schemas import succesMessage, OK
-from typing import Dict, List
+from src.schemas.schemas import succesMessage, OK
+from typing import Dict
 
 balance_router = APIRouter(prefix='/api/v1')
 

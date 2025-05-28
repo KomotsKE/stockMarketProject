@@ -6,11 +6,11 @@ from typing import List, TYPE_CHECKING
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from src.profile.models.user import UserORM
-    from profile.models.instrument import InstrumentORM
+    from src.dataBase.models.user import UserORM
+    from src.dataBase.models.instrument import InstrumentORM
 
 from src.dataBase.base import Base
-from src.stockMarket.schemas.order import OrderType, OrderStatus, OperationDirection
+from src.schemas.order import OrderType, OrderStatus, OperationDirection
 
 # Решил не разделять ордеры на разные табличны, чтобы не делать лишних джоинов, а все поля храню в 1 таблице, при этом указывая тип ордера. 
 # Те поля которые встречаются не во всех ордерах могут быть null - nullable.

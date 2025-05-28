@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, List
 from src.dataBase.base import Base
 
 if TYPE_CHECKING:
-    from src.profile.models.balance import BalanceORM
-    from src.stockMarket.models.order import OrderORM
-    from src.profile.models.balance import TransactionORM
+    from src.dataBase.models.balance import BalanceORM
+    from src.dataBase.models.order import OrderORM
+    from src.dataBase.models.balance import TransactionORM
 
 class InstrumentORM(Base):
     __tablename__ = "instrument"

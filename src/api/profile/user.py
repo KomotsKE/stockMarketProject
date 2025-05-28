@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select
 from fastapi import Depends, HTTPException, Header , status, APIRouter
 from src.config import settings
-from src.profile.schemas.user import User, NewUser, Role
-from src.profile.models.user import UserORM
+from src.schemas.user import User, NewUser, Role
+from src.dataBase.models.user import UserORM
 from src.dataBase.session import async_session_factory
 
 

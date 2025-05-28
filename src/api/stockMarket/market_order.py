@@ -5,16 +5,16 @@ from sqlalchemy import select
 import datetime
 
 from src.dataBase.session import async_session_factory
-from src.stockMarket.models.order import OrderORM
-from src.profile.api.user import get_user_by_token
-from src.profile.schemas.user import User
-from src.stockMarket.schemas.order import (
+from src.dataBase.models.order import OrderORM
+from src.api.profile.user import get_user_by_token
+from src.schemas.user import User
+from src.schemas.order import (
     MarketOrderBody,
     OrderStatus,
     OrderType,
     OperationDirection
 )
-from src.profile.models.balance import BalanceORM
+from src.dataBase.models.balance import BalanceORM
 
 market_order_router = APIRouter(prefix="/api/v1/market-order", tags=["market-order"])
 

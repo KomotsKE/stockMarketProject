@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from src.profile.schemas.balance import BalanceTransaction
+from src.schemas.balance import BalanceTransaction
 from datetime import datetime
 
 class Instrument(BaseModel):

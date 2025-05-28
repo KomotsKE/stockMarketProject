@@ -3,12 +3,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List, TYPE_CHECKING
 
-from src.profile.schemas.user import Role
+from src.schemas.user import Role
 from src.dataBase.base import Base
-from src.stockMarket.models.order import OrderORM
+from src.dataBase.models.order import OrderORM
 
 if TYPE_CHECKING:
-    from src.profile.models.balance import BalanceORM
+    from src.dataBase.models.balance import BalanceORM
 
 class UserORM(Base):
     __tablename__ = 'user'

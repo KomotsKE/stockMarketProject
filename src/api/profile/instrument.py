@@ -1,12 +1,12 @@
-from src.profile.schemas.instrument import Instrument, Transaction
-from src.profile.models.instrument import InstrumentORM
-from src.profile.api.user import is_admin
+from src.schemas.instrument import Instrument, Transaction
+from src.dataBase.models.instrument import InstrumentORM
+from src.api.profile.user import is_admin
 from src.dataBase.session import async_session_factory
 from sqlalchemy import select
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from src.public.schemas import succesMessage, OK
-from src.profile.models.balance import TransactionORM
+from src.schemas.schemas import succesMessage, OK
+from src.dataBase.models.balance import TransactionORM
 
 
 instrument_router = APIRouter(prefix="/api/v1")
