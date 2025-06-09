@@ -1,4 +1,4 @@
-import src.models 
+import dataBase.modelsIMP
 
 from logging.config import fileConfig
 
