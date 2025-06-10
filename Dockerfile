@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY ./src ./src
 COPY ./entrypoint.sh ./entrypoint.sh
 COPY ./alembic.ini ./alembic.ini
+
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000

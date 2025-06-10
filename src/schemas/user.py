@@ -1,5 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, UUID4, Field
+from typing import Optional
 
 class Role(str, Enum):
     ADMIN = 'ADMIN'
@@ -13,6 +14,7 @@ class User(BaseModel):
 
 class NewUser(BaseModel):
     name: str = Field(min_length=3)
+    role: Role = Field(default=Role.USER)
 
 class CreateOrderResponse(BaseModel):
     succes: bool = Field(default=True)
