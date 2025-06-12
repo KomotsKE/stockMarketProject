@@ -17,8 +17,14 @@ class UserORM(Base):
     name: Mapped[str]
     role: Mapped[Role]
     api_key: Mapped[str]
-    balance: Mapped[List["BalanceORM"]] = relationship(back_populates="user")
-    orders: Mapped[List["OrderORM"]] = relationship(back_populates="user")
+    balance: Mapped[List["BalanceORM"]] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan"
+    )
+    orders: Mapped[List["OrderORM"]] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan"
+    )
     
 
 
