@@ -28,7 +28,7 @@ class OrderORM(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id'))
     timestamp: Mapped[datetime]
     direction: Mapped[OperationDirection]
-    ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker'))
+    ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker', ondelete="CASCADE"))
     qty: Mapped[int]
     price: Mapped[int] = mapped_column(nullable=True)
     filled: Mapped[int] = mapped_column(nullable=True, default=0)

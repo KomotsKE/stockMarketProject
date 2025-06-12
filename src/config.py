@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     REDIS_USER: str
     REDIS_PASSWORD: str
     REDIS_USER_PASSWORD: str
+    PGADMIN_EMAIL: str
+    PGADMIN_PASSWORD: str
 
     @property
     def DATABASE_URL_PSYCOPG(self):
@@ -20,6 +22,11 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL_ASYNCPG(self):
         return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASSWORD}@{self.POSTGRES_DB_HOST}:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
+    
+    @property
+    def DATABASE_URL_LOCAL(self):
+        return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASSWORD}@localhost:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
+
     
     @property 
     def REDIS_DB_CONN(self):

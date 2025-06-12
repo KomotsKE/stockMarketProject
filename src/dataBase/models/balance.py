@@ -14,7 +14,7 @@ class BalanceORM(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
-    ticker: Mapped[str] = mapped_column(ForeignKey("instrument.ticker"))
+    ticker: Mapped[str] = mapped_column(ForeignKey("instrument.ticker", ondelete="CASCADE"))
     amount: Mapped[float]
     reserved: Mapped[float] = mapped_column(default=0)
     user: Mapped["UserORM"] = relationship(back_populates='balance')
@@ -24,7 +24,7 @@ class TransactionORM(Base):
     __tablename__ = 'transaction'
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker'))
+    ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker', ondelete="CASCADE"))
     amount: Mapped[int]
     price: Mapped[int]
     timestamp: Mapped[datetime]
