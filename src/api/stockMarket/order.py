@@ -27,7 +27,7 @@ from src.schemas.order import (
 
 from src.schemas.schemas import succesMessage
 
-order_router = APIRouter(prefix="/api/v1/order")
+order_router = APIRouter(prefix="/api/v1")
 
 @overload
 async def get_orderbook_orders(
@@ -145,7 +145,7 @@ async def get_orderbook(ticker: str, limit: int = 10) -> L2OrderBook:
         await session.rollback()
         raise e
 
-@order_router.get("/{order_id}", response_model=LimitOrder | MarketOrder, tags=["order"])
+@order_router.get("/order/{order_id}", response_model=LimitOrder | MarketOrder, tags=["order"])
 async def get_order(order_id: UUID, user: User = Depends(get_user_by_token)) -> LimitOrder | MarketOrder:
     """
     Возвращает информацию о конкретном ордере
@@ -187,7 +187,7 @@ async def get_order(order_id: UUID, user: User = Depends(get_user_by_token)) -> 
         await session.rollback()
         raise e
 
-@order_router.get("", response_model=List[LimitOrder | MarketOrder], tags=["order"])
+@order_router.get("/order", response_model=List[LimitOrder | MarketOrder], tags=["order"])
 async def list_orders(user: User = Depends(get_user_by_token)) -> List[LimitOrder | MarketOrder]:
     """
     Возвращает список всех ордеров пользователя
@@ -227,7 +227,7 @@ async def list_orders(user: User = Depends(get_user_by_token)) -> List[LimitOrde
         await session.rollback()
         raise e
 
-@order_router.delete("/{order_id}", response_model=succesMessage, tags=["order"])
+@order_router.delete("/order/{order_id}", response_model=succesMessage, tags=["order"])
 async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
     """
     Отменяет ордер
