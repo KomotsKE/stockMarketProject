@@ -12,6 +12,8 @@ from src.dataBase.models.balance import BalanceORM, TransactionORM
 from src.api.profile.user import get_user_by_token
 from src.api.profile.balance import update_balances, reserve_funds, get_user_balance
 from src.schemas.user import User
+from src.schemas.instrument import TickerStr
+from src.schemas.balance import AmountInt
 from src.schemas.order import (
     MarketOrderBody,
     LimitOrderBody,
@@ -31,19 +33,19 @@ order_router = APIRouter(prefix="/api/v1")
 
 @overload
 async def get_orderbook_orders(
-    ticker: str, 
+    ticker: TickerStr, 
     session: AsyncSession, 
     orderSide: OperationDirection
 ) -> List[OrderORM]: ...
 
 @overload
 async def get_orderbook_orders(
-    ticker: str, 
+    ticker: TickerStr, 
     session: AsyncSession, 
     orderSide: None = None
 ) -> Tuple[List[OrderORM], List[OrderORM]]: ...
 
-async def get_orderbook_orders(ticker: str, session: AsyncSession, orderSide: Optional[OperationDirection] = None) -> Union[List[OrderORM], Tuple[List[OrderORM], List[OrderORM]]]:
+async def get_orderbook_orders(ticker: TickerStr, session: AsyncSession, orderSide: Optional[OperationDirection] = None) -> Union[List[OrderORM], Tuple[List[OrderORM], List[OrderORM]]]:
     if orderSide is not None:
         if orderSide == OperationDirection.BUY:
             buy_query = (
@@ -103,7 +105,7 @@ async def get_orderbook_orders(ticker: str, session: AsyncSession, orderSide: Op
         return buy_orders.scalars().all(), sell_orders.scalars().all()
 
 @order_router.get("/public/orderbook/{ticker}", response_model=L2OrderBook, tags=["public"])
-async def get_orderbook(ticker: str, limit: int = 10) -> L2OrderBook:
+async def get_orderbook(ticker: TickerStr, limit: AmountInt = 10) -> L2OrderBook:
     """
     Возвращает книгу ордеров (стакан) для указанного тикера
     """
@@ -268,7 +270,7 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
         await session.rollback()
         raise e
 
-@order_router.post("", response_model=CreateOrderResponse, tags=["order"])
+@order_router.post("/order/", response_model=CreateOrderResponse, tags=["order"])
 async def create_order(order_body: MarketOrderBody | LimitOrderBody,
                         background_tasks: BackgroundTasks,
                         user: User = Depends(get_user_by_token)) -> CreateOrderResponse:
@@ -325,9 +327,9 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
 async def check_balance(
     session: AsyncSession, 
     user_id: UUID, 
-    ticker: str, 
-    qty: int, 
-    price: int = None, 
+    ticker: TickerStr, 
+    qty: AmountInt, 
+    price: AmountInt | None = None, 
     direction: OperationDirection = None
 ) -> bool:
     """
@@ -436,7 +438,7 @@ async def execute_market_order(marketOrder: OrderORM, session: AsyncSession):
         await session.rollback()
         raise e
 
-async def match_limit_orders(ticker: str):
+async def match_limit_orders(ticker: TickerStr):
     """
     Запускает процесс сопоставления ордеров (matching engine)
     """

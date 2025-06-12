@@ -1,4 +1,4 @@
-from src.schemas.instrument import Instrument, Transaction
+from src.schemas.instrument import Instrument, Transaction, TickerStr, LimitInt
 from src.dataBase.models.instrument import InstrumentORM
 from src.api.profile.user import is_admin
 from src.dataBase.session import async_session_factory
@@ -26,7 +26,7 @@ async def add_instrument(instrument : Instrument, rights: None = Depends(is_admi
         return succesMessage
 
 @instrument_router.delete("/admin/instrument/{ticker}", tags=["admin"])
-async def del_instrument(ticker : str, rights: None = Depends(is_admin)) -> OK:
+async def del_instrument(ticker : TickerStr, rights: None = Depends(is_admin)) -> OK:
     async with async_session_factory() as session:
         result = await session.execute(select(InstrumentORM).filter(InstrumentORM.ticker == ticker))
         instrument = result.scalar_one_or_none()
@@ -37,7 +37,7 @@ async def del_instrument(ticker : str, rights: None = Depends(is_admin)) -> OK:
         return succesMessage
 
 @instrument_router.get("/public/transaction/{ticker}", tags=["public"])
-async def get_transaction_history(ticker : str, limit : int) -> List[Transaction]:
+async def get_transaction_history(ticker : TickerStr, limit : LimitInt) -> List[Transaction]:
     async with async_session_factory() as session:
         query = select(TransactionORM).where(TransactionORM.ticker == ticker).order_by(TransactionORM.timestamp).limit(limit)
         result = await session.execute(query)

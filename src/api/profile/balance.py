@@ -3,19 +3,20 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.profile.user import get_user_by_token, is_admin, UserORM
-from src.schemas.user import User
 from src.dataBase.models.instrument import InstrumentORM
 from src.api.profile.instrument import get_instruments_list
-from src.schemas.balance import BalanceTransaction
 from src.dataBase.models.balance import BalanceORM, TransactionORM
 from src.dataBase.session import async_session_factory
 from src.schemas.schemas import succesMessage, OK
+from src.schemas.instrument import TickerStr
 from src.schemas.order import OperationDirection
+from src.schemas.user import User
+from src.schemas.balance import BalanceTransaction, AmountInt
 from typing import Dict
 
 balance_router = APIRouter(prefix='/api/v1')
 
-async def validate_user_ticker(session: AsyncSession, user_id: UUID, ticker : str) -> None:
+async def validate_user_ticker(session: AsyncSession, user_id: UUID, ticker : TickerStr) -> None:
     user = await session.get(UserORM, user_id)
     if user is None: 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
@@ -60,7 +61,7 @@ async def withdraw(transaction: BalanceTransaction, rights: None = Depends(is_ad
     return succesMessage
 
 
-async def get_user_balance(session : AsyncSession, user_id : UUID, ticker: str) -> BalanceORM | None:
+async def get_user_balance(session : AsyncSession, user_id : UUID, ticker: TickerStr) -> BalanceORM | None:
     await validate_user_ticker(session, user_id, ticker)
     result = await session.execute(select(BalanceORM)
                                     .where(BalanceORM.user_id == user_id, 
@@ -89,14 +90,14 @@ async def update_balances(session: AsyncSession, buyer_id: UUID, seller_id: UUID
     seller_balance.reserved -= orderTransaction.amount
 
 
-async def increase_balance(session: AsyncSession, balance: BalanceORM | None, ticker: str, user_id: UUID, amount: int):
+async def increase_balance(session: AsyncSession, balance: BalanceORM | None, ticker: TickerStr, user_id: UUID, amount: AmountInt):
     if balance is None:
         session.add(BalanceORM(user_id = user_id, ticker=ticker, amount=amount))
     else:
         balance.amount += amount
 
 
-async def decrease_balance(session: AsyncSession, balance: BalanceORM | None, amount: int):
+async def decrease_balance(session: AsyncSession, balance: BalanceORM | None, amount: AmountInt):
     if balance is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Инструмент у пользователя не найден")
     elif balance.amount < amount:
@@ -108,9 +109,9 @@ async def decrease_balance(session: AsyncSession, balance: BalanceORM | None, am
 async def reserve_funds(
     session: AsyncSession, 
     user_id: UUID, 
-    ticker: str, 
-    qty: int, 
-    price: int, 
+    ticker: TickerStr, 
+    qty: AmountInt, 
+    price: AmountInt, 
     direction: OperationDirection
 ):
     if direction == OperationDirection.BUY:
