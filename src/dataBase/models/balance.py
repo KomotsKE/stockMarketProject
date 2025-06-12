@@ -13,7 +13,7 @@ class BalanceORM(Base):
     __tablename__ = 'balance'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     ticker: Mapped[str] = mapped_column(ForeignKey("instrument.ticker", ondelete="CASCADE"))
     amount: Mapped[float]
     reserved: Mapped[float] = mapped_column(default=0)

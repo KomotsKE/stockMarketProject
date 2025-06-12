@@ -25,7 +25,7 @@ class OrderORM(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     type: Mapped[OrderType]
     status: Mapped[OrderStatus]
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id'))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id', ondelete="CASCADE"))
     timestamp: Mapped[datetime]
     direction: Mapped[OperationDirection]
     ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker', ondelete="CASCADE"))
