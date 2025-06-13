@@ -10,7 +10,7 @@ from src.dataBase.session import async_session_factory
 from src.dataBase.models.order import OrderORM
 from src.dataBase.models.balance import BalanceORM, TransactionORM
 from src.api.profile.user import get_user_by_token
-from src.api.profile.balance import update_balances, reserve_funds, get_user_balance
+from src.api.profile.balance import update_balances, reserve_funds, lock_balance
 from src.schemas.user import User
 from src.schemas.instrument import TickerStr
 from src.schemas.balance import AmountInt
@@ -253,12 +253,12 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
             if remaining_qty > 0 and order.type == OrderType.LIMIT:
                 if order.direction == OperationDirection.BUY:
                     rub_to_unreserve = remaining_qty * order.price
-                    balance = await get_user_balance(session, order.user_id, "RUB")
+                    balance = await lock_balance(session, order.user_id, "RUB")
                     if balance and balance.reserved >= rub_to_unreserve:
                         balance.reserved -= rub_to_unreserve
 
                 elif order.direction == OperationDirection.SELL:
-                    asset_balance = await get_user_balance(session, order.user_id, order.ticker)
+                    asset_balance = await lock_balance(session, order.user_id, order.ticker)
                     if asset_balance and asset_balance.reserved >= remaining_qty:
                         asset_balance.reserved -= remaining_qty
             
