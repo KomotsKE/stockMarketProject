@@ -74,7 +74,7 @@ async def get_user_balance(session : AsyncSession, user_id : UUID, ticker: Ticke
     await validate_user_ticker(session, user_id, ticker)
     result = await session.execute(select(BalanceORM)
                                     .where(BalanceORM.user_id == user_id, 
-                                    BalanceORM.ticker == ticker))
+                                    BalanceORM.ticker == ticker).with_for_update())
     balance = result.scalar_one_or_none()
     return balance
 

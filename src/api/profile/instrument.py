@@ -7,6 +7,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from src.schemas.schemas import succesMessage, OK
 from src.dataBase.models.balance import TransactionORM
+from sqlalchemy.exc import IntegrityError
+
 
 
 instrument_router = APIRouter(prefix="/api/v1")
@@ -21,15 +23,16 @@ async def get_instruments_list() -> List[Instrument]:
         raise e
 
 @instrument_router.post("/admin/instrument", tags=["admin"])
-async def add_instrument(instrument : Instrument, rights: None = Depends(is_admin)) -> OK:
-    try: 
-        newInstrument = InstrumentORM(name=instrument.name, ticker=instrument.ticker)
-        async with async_session_factory() as session:
-            session.add(newInstrument)
+async def add_instrument(instrument: Instrument, rights: None = Depends(is_admin)) -> OK:
+    newInstrument = InstrumentORM(name=instrument.name, ticker=instrument.ticker)
+    async with async_session_factory() as session:
+        session.add(newInstrument)
+        try:
             await session.commit()
-            return succesMessage
-    except Exception as e:
-        raise e
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(status_code=409, detail="Инструмент с таким тикером уже существует")
+    return succesMessage
 
 @instrument_router.delete("/admin/instrument/{ticker}", tags=["admin"])
 async def del_instrument(ticker : TickerStr, rights: None = Depends(is_admin)) -> OK:
