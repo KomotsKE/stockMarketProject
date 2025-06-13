@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import TIMESTAMP, ForeignKey
 from typing import TYPE_CHECKING
 from src.dataBase.base import Base
 from datetime import datetime
@@ -31,5 +31,5 @@ class TransactionORM(Base):
     ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker'))
     amount: Mapped[int]
     price: Mapped[int]
-    timestamp: Mapped[datetime]
+    timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
     instrument: Mapped["InstrumentORM"] = relationship(back_populates='transactions')

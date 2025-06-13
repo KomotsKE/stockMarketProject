@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import CheckConstraint, ForeignKey
+from sqlalchemy import TIMESTAMP, CheckConstraint, ForeignKey
 from typing import List, TYPE_CHECKING
 from datetime import datetime
 
@@ -26,7 +26,7 @@ class OrderORM(Base):
     type: Mapped[OrderType]
     status: Mapped[OrderStatus]
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id', ondelete="CASCADE"))
-    timestamp: Mapped[datetime]
+    timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
     direction: Mapped[OperationDirection]
     ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker', ondelete="CASCADE"))
     qty: Mapped[int]

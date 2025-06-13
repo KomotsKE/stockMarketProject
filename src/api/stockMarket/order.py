@@ -270,7 +270,7 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
         await session.rollback()
         raise e
 
-@order_router.post("/order/", response_model=CreateOrderResponse, tags=["order"])
+@order_router.post("/order", response_model=CreateOrderResponse, tags=["order"])
 async def create_order(order_body: MarketOrderBody | LimitOrderBody,
                         background_tasks: BackgroundTasks,
                         user: User = Depends(get_user_by_token)) -> CreateOrderResponse:
@@ -300,7 +300,7 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
                 type=order_body.type,
                 status=OrderStatus.NEW,
                 user_id= user.id,
-                timestamp = datetime.datetime.now(),
+                timestamp = datetime.datetime.now(datetime.timezone.utc),
                 direction=order_body.direction,
                 ticker=order_body.ticker,
                 qty=order_body.qty,
