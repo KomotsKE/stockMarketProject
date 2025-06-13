@@ -20,18 +20,20 @@ balance_router = APIRouter(prefix='/api/v1')
 @balance_router.get("/balance", tags=["balance"])
 async def get_balances(user: User = Depends(get_user_by_token)) -> Dict[str, int]:
     try:
-        user_balance : Dict[str, int] = {}
-        ticker_to_name : Dict[str, str] = {}
+        user_balance: Dict[str, int] = {}
         async with async_session_factory() as session:
             instruments = await get_instruments_list()
-            
-            for name, ticker in instruments:
-                ticker_to_name[ticker] = name
-                user_balance[name] = 0
-            balances_result = await session.execute(select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id))
+            for _, ticker in instruments:
+                user_balance[ticker] = 0
+
+            balances_result = await session.execute(
+                select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id)
+            )
             balances = balances_result.all()
+
             for ticker, amount in balances:
-                user_balance[ticker_to_name[ticker]] = amount
+                user_balance[ticker] = amount
+
         return user_balance
     except Exception as e:
         raise e
@@ -60,24 +62,6 @@ async def withdraw(transaction: BalanceTransaction, rights: None = Depends(is_ad
             await session.rollback()
             raise e
 
-# async def update_balances(session: AsyncSession, buyer_id: UUID, seller_id: UUID, orderTransaction: TransactionORM, isMarket: bool = False):
-#     buyer_balance = await get_user_balance(session, buyer_id, orderTransaction.ticker)
-#     seller_balance = await get_user_balance(session, seller_id, orderTransaction.ticker)
-
-#     await increase_balance(session, buyer_balance, amount=orderTransaction.amount, ticker=orderTransaction.ticker, user_id=buyer_id)
-#     await decrease_balance(session, seller_balance, amount=orderTransaction.amount)
-
-#     buyer_balance_RUB = await get_user_balance(session, buyer_id, "RUB")
-#     seller_balance_RUB = await get_user_balance(session, seller_id, "RUB")
-
-#     rub_amount = orderTransaction.amount * orderTransaction.price
-
-#     await decrease_balance(session, buyer_balance_RUB, amount=rub_amount)
-#     await increase_balance(session, seller_balance_RUB, amount=rub_amount, ticker=orderTransaction.ticker, user_id=seller_id)
-
-#     if not isMarket:
-#         buyer_balance_RUB.reserved -= rub_amount
-#     seller_balance.reserved -= orderTransaction.amount
 
 async def update_balances(session: AsyncSession, buyer_id: UUID, seller_id: UUID, orderTransaction: TransactionORM, isMarket: bool = False):
     ticker = orderTransaction.ticker
@@ -110,22 +94,6 @@ async def update_balances(session: AsyncSession, buyer_id: UUID, seller_id: UUID
     if not isMarket:
         buyer_balance_RUB.reserved = max(buyer_balance_RUB.reserved - rub_amount, 0)
         seller_balance.reserved = max(seller_balance.reserved - amount, 0)
-    
-
-
-# async def get_user_balance(session : AsyncSession, user_id : UUID, ticker: TickerStr) -> BalanceORM | None:
-#     user = await session.get(UserORM, user_id)
-#     if user is None: 
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
-
-#     instrument = await session.get(InstrumentORM, ticker)
-#     if instrument is None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Инструмент '{ticker}'не найден")
-#     result = await session.execute(select(BalanceORM)
-#                                     .where(BalanceORM.user_id == user_id, 
-#                                     BalanceORM.ticker == ticker).with_for_update())
-#     balance = result.scalar_one_or_none()
-#     return balance
 
 async def increase_balance(session: AsyncSession, user_id: UUID, ticker: str, amount: int):
     stmt = (
@@ -149,8 +117,6 @@ async def decrease_balance(session: AsyncSession, user_id: UUID, ticker: str, am
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно средств на балансе")
     
     balance.amount -= amount
-    if balance.amount == 0:
-        await session.delete(balance)
 
 async def reserve_funds(
     session: AsyncSession, 
@@ -190,3 +156,17 @@ async def lock_balance(session: AsyncSession, user_id: UUID, ticker: TickerStr) 
     if not balance:
         raise HTTPException(status_code=404, detail=f"Баланс {ticker} не найден")
     return balance
+
+async def release_user_reserve(session: AsyncSession, user_id: UUID, ticker: str):
+    """
+    Снимает весь резерв (reserved = 0) у пользователя по указанному активу (тикеру).
+    """
+    balance_result = await session.execute(
+        select(BalanceORM).where(BalanceORM.user_id == user_id, BalanceORM.ticker == ticker).with_for_update()
+    )
+    balance = balance_result.scalar_one_or_none()
+
+    if balance is None:
+        raise HTTPException(status_code=404, detail=f"Баланс {ticker} пользователя {user_id} не найден")
+
+    balance.reserved = 0

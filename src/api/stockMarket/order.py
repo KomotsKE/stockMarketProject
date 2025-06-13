@@ -5,12 +5,12 @@ from sqlalchemy import select, desc, asc
 from asyncio import gather
 import datetime
 from typing import List, Dict, Any, Tuple, Optional, Union, overload
-
 from src.dataBase.session import async_session_factory
 from src.dataBase.models.order import OrderORM
 from src.dataBase.models.balance import BalanceORM, TransactionORM
 from src.api.profile.user import get_user_by_token
-from src.api.profile.balance import update_balances, reserve_funds, lock_balance
+from src.api.profile.balance import update_balances, reserve_funds, lock_balance, release_user_reserve
+from src.api.profile.instrument import get_instruments_list
 from src.schemas.user import User
 from src.schemas.instrument import TickerStr
 from src.schemas.balance import AmountInt
@@ -279,6 +279,10 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
     """
     try: 
         async with async_session_factory() as session:
+            instruments = await get_instruments_list()
+            valid_tickers = {ticker for _, ticker in instruments}
+            if order_body.ticker not in valid_tickers:
+                raise HTTPException(status_code=400, detail="Неверный тикер")
             has_balance = await check_balance(
                 session=session,
                 user_id=user.id,
@@ -470,11 +474,13 @@ async def match_limit_orders(ticker: TickerStr):
                             # Обновляем статусы ордеров
                             if buy_order.filled >= buy_order.qty:
                                 buy_order.status = OrderStatus.EXEC
+                                await release_user_reserve(session, user_id=buy_order.user_id, ticker="RUB")
                             else:
                                 buy_order.status = OrderStatus.PART_EXEC
                                 
                             if sell_order.filled >= sell_order.qty:
                                 sell_order.status = OrderStatus.EXEC
+                                await release_user_reserve(session, user_id=sell_order.user_id, ticker=ticker)
                             else:
                                 sell_order.status = OrderStatus.PART_EXEC
 
@@ -483,6 +489,7 @@ async def match_limit_orders(ticker: TickerStr):
                             
                             session.add(transaction)
                             if buy_order.status == OrderStatus.EXEC:
+                                await release_user_reserve(session, user_id=buy_order.user_id, ticker="RUB")
                                 break
 
             await session.commit()
