@@ -110,36 +110,39 @@ async def get_orderbook(ticker: TickerStr, limit: AmountInt = 10) -> L2OrderBook
     Возвращает книгу ордеров (стакан) для указанного тикера
     """
     try:
-        ask_levels: Dict[float, int] = {}
-        bid_levels: Dict[float, int] = {}
-
+        ask_levels : List[Level] = []
+        bid_levels : List[Level]= []
         async with async_session_factory() as session:
             query = select(OrderORM).where(
                 OrderORM.ticker == ticker,
                 OrderORM.type == OrderType.LIMIT,
-                OrderORM.status.in_([OrderStatus.NEW, OrderStatus.PART_EXEC])
-            )
+                OrderORM.status == OrderStatus.NEW
+            ).order_by(OrderORM.price, OrderORM.timestamp).limit(limit)
+            
             result = await session.execute(query)
             orders = result.scalars().all()
-
+            
+            price_levels = {}
             for order in orders:
-                remaining_qty = order.qty - (order.filled or 0)
-                if remaining_qty <= 0:
-                    continue
-
-                if order.direction == OperationDirection.BUY:
-                    bid_levels[order.price] = bid_levels.get(order.price, 0) + remaining_qty
-                else:
-                    ask_levels[order.price] = ask_levels.get(order.price, 0) + remaining_qty
-
-            sorted_asks = sorted(ask_levels.items())[:limit]
-            sorted_bids = sorted(bid_levels.items(), reverse=True)[:limit]
-
-            ask_result = [Level(price=p, qty=q) for p, q in sorted_asks]
-            bid_result = [Level(price=p, qty=q) for p, q in sorted_bids]
-
-        return L2OrderBook(ask_levels=ask_result, bid_levels=bid_result)
-
+                price = order.price
+                if price not in price_levels:
+                    price_levels[price] = 0
+                price_levels[price] += order.qty - (order.filled or 0)
+            
+            for order in orders:
+                if order.price in price_levels and price_levels[order.price] > 0:
+                    level = Level(price=order.price, qty=price_levels[order.price])
+                    price_levels[order.price] = 0  
+                    
+                    if order.direction == OperationDirection.BUY:
+                        bid_levels.append(level)
+                    else:
+                        ask_levels.append(level)
+            
+            ask_levels.sort(key=lambda x: x.price)
+            bid_levels.sort(key=lambda x: x.price, reverse=True)
+            
+        return L2OrderBook(ask_levels=ask_levels, bid_levels=bid_levels)
     except Exception as e:
         await session.rollback()
         raise e
@@ -428,11 +431,10 @@ async def execute_market_order(marketOrder: OrderORM, session: AsyncSession):
             marketOrder.status = OrderStatus.CANCELLED
             marketOrder.filled = 0
 
-            if executed_transactions:
-                for order, prev_filled, prev_status, transaction in executed_transactions:
-                    order.filled = prev_filled
-                    order.status = prev_status
-                    await session.delete(transaction)
+            for order, prev_filled, prev_status, transaction in executed_transactions:
+                order.filled = prev_filled
+                order.status = prev_status
+                await session.delete(transaction)
 
         session.add(marketOrder)
         await session.commit()
@@ -487,6 +489,7 @@ async def match_limit_orders(ticker: TickerStr):
                             
                             session.add(transaction)
                             if buy_order.status == OrderStatus.EXEC:
+                                await release_user_reserve(session, user_id=buy_order.user_id, ticker="RUB")
                                 break
 
             await session.commit()
