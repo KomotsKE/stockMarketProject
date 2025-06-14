@@ -19,49 +19,35 @@ balance_router = APIRouter(prefix='/api/v1')
 
 @balance_router.get("/balance", tags=["balance"])
 async def get_balances(user: User = Depends(get_user_by_token)) -> Dict[str, int]:
-    try:
-        user_balance: Dict[str, int] = {}
-        async with async_session_factory() as session:
-            instruments = await get_instruments_list()
-            for _, ticker in instruments:
-                user_balance[ticker] = 0
+    user_balance: Dict[str, int] = {}
+    async with async_session_factory() as session:
+        instruments = await get_instruments_list()
+        for _, ticker in instruments:
+            user_balance[ticker] = 0
 
-            balances_result = await session.execute(
-                select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id)
-            )
-            balances = balances_result.all()
+        balances_result = await session.execute(
+            select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id)
+        )
+        balances = balances_result.all()
 
-            for ticker, amount in balances:
-                user_balance[ticker] = amount
+        for ticker, amount in balances:
+            user_balance[ticker] = amount
 
         return user_balance
-    except Exception as e:
-        raise e
-
 
 @balance_router.post("/admin/balance/deposit", tags=["admin","balance"])
 async def deposit(transaction: BalanceTransaction, rights: None = Depends(is_admin)) -> OK:
     async with async_session_factory() as session:
-        try:
-            await increase_balance(session, user_id=transaction.user_id, ticker=transaction.ticker, amount=transaction.amount)
-            await session.commit()
-            return succesMessage
-        except Exception as e:
-            await session.rollback()
-            raise e
-
+        await increase_balance(session, user_id=transaction.user_id, ticker=transaction.ticker, amount=transaction.amount)
+        await session.commit()
+        return succesMessage
 
 @balance_router.post("/admin/balance/withdraw", tags=["admin","balance"])
 async def withdraw(transaction: BalanceTransaction, rights: None = Depends(is_admin)) -> OK:
     async with async_session_factory() as session:
-        try:
-            await decrease_balance(session, user_id=transaction.user_id, ticker=transaction.ticker, amount=transaction.amount)
-            await session.commit()
-            return succesMessage
-        except Exception as e:
-            await session.rollback()
-            raise e
-
+        await decrease_balance(session, user_id=transaction.user_id, ticker=transaction.ticker, amount=transaction.amount)
+        await session.commit()
+        return succesMessage
 
 async def update_balances(session: AsyncSession, buyer_id: UUID, seller_id: UUID, orderTransaction: TransactionORM, isMarket: bool = False):
     ticker = orderTransaction.ticker

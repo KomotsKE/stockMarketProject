@@ -8,8 +8,6 @@ from src.dataBase.models.user import UserORM
 from src.dataBase.session import async_session_factory
 from typing import Optional
 
-
-
 auth_router = APIRouter(prefix='/api/v1')
 
 async def get_user_by_token(token: Optional[str] = Header(alias="authorization")) -> User:
@@ -35,29 +33,23 @@ async def is_admin(user: User = Depends(get_user_by_token)) -> None:
 
 @auth_router.post('/public/register', tags=["public"])
 async def register_user(newUser: NewUser) -> User:
-    try: 
-        token = jwt.encode(payload={"name": newUser.name}, key=settings.SECRET_JWT_KEY, algorithm='HS256')
-        user = UserORM(id=uuid.uuid4(),name=newUser.name, role=newUser.role, api_key = token)
-        async with async_session_factory() as session:
-            session.add(user)
-            await session.commit()
-        return User(id=user.id, name=user.name, role=user.role, api_key=user.api_key)
-    except Exception as e:
-        raise e
+    token = jwt.encode(payload={"name": newUser.name}, key=settings.SECRET_JWT_KEY, algorithm='HS256')
+    user = UserORM(id=uuid.uuid4(),name=newUser.name, role=newUser.role, api_key = token)
+    async with async_session_factory() as session:
+        session.add(user)
+        await session.commit()
+    return User(id=user.id, name=user.name, role=user.role, api_key=user.api_key)
 
 
 @auth_router.delete('/admin/user/{user_id}', tags=["admin", "user"])
 async def delete_user(user_id : uuid.UUID, token : str = Depends(is_admin)) -> User:
-    try:
-        async with async_session_factory() as session:
-            result = await session.execute(select(UserORM).filter(UserORM.id == user_id))
-            user = result.scalar_one_or_none()
-            if user is None:
-                raise HTTPException(status_code=404, detail="User not found")
-            await session.delete(user)
-            await session.commit()
-        return User(id=user.id, name = user.name, role = user.role, api_key=user.api_key)
-    except Exception as e:
-        raise e
+    async with async_session_factory() as session:
+        result = await session.execute(select(UserORM).filter(UserORM.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        await session.delete(user)
+        await session.commit()
+    return User(id=user.id, name = user.name, role = user.role, api_key=user.api_key)
 
 
