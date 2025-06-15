@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, asc
 from asyncio import gather
@@ -256,7 +256,6 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
 
 @order_router.post("/order", response_model=CreateOrderResponse, tags=["order"])
 async def create_order(order_body: MarketOrderBody | LimitOrderBody,
-                        background_tasks: BackgroundTasks,
                         user: User = Depends(get_user_by_token)) -> CreateOrderResponse:
     """
     Создает новый ордер (рыночный или лимитный)
@@ -297,15 +296,14 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
 
         if order.type == OrderType.LIMIT:
             await reserve_funds(session, order.user_id, order.ticker, order.qty, order.price, order.direction)
+        if order.type == OrderType.MARKET:
+            await execute_market_order(order, session)
 
         session.add(order)
         await session.commit()
         await session.refresh(order)
-    
-    if order.type == OrderType.MARKET:
-        await execute_market_order(order, session)
-    else:
-        background_tasks.add_task(match_limit_orders, order.ticker)
+
+        match_limit_orders(order.ticker)
     
     return CreateOrderResponse(order_id=order.id)
 
@@ -314,13 +312,19 @@ async def check_balance(
     user_id: UUID, 
     ticker: TickerStr, 
     qty: AmountInt, 
-    price: AmountInt | None = None, 
-    direction: OperationDirection = None
+    price: AmountInt | None, 
+    direction: OperationDirection
 ) -> bool:
     """
     Проверяет достаточно ли средств/активов для выполнения операции
     """
-    if direction == OperationDirection.BUY and price is not None:
+    if direction == OperationDirection.BUY:
+        if price is None:
+            market_price = await get_market_order_execution_price(session, ticker, qty, direction)
+            if market_price is None:
+                return False 
+            price = market_price
+            
         required_amount = qty * price
         commission = required_amount * 0.0006
         total_required = required_amount + commission
@@ -466,3 +470,62 @@ async def match_limit_orders(ticker: TickerStr):
                     break
 
         await session.commit()
+
+async def get_market_order_execution_price(
+    session: AsyncSession,
+    ticker: TickerStr,
+    qty: AmountInt,
+    direction: OperationDirection
+) -> float | None:
+    """
+    Вычисляет среднюю цену исполнения рыночного ордера на основе ордербука
+    """
+    if direction == OperationDirection.BUY:
+        sell_orders = await get_orderbook_orders(ticker, session, OperationDirection.SELL)
+        if not sell_orders:
+            return None
+        
+        remaining_qty = qty
+        total_cost = 0.0
+        
+        for order in sell_orders:
+            available_qty = order.qty - (order.filled or 0)
+            if available_qty <= 0:
+                continue
+                
+            execute_qty = min(remaining_qty, available_qty)
+            total_cost += execute_qty * order.price
+            remaining_qty -= execute_qty
+            
+            if remaining_qty <= 0:
+                break
+        
+        if remaining_qty > 0:
+            return None
+            
+        return total_cost / qty
+    
+    else:  # SELL
+        buy_orders = await get_orderbook_orders(ticker, session, OperationDirection.BUY)
+        if not buy_orders:
+            return None
+        
+        remaining_qty = qty
+        total_revenue = 0.0
+        
+        for order in buy_orders:
+            available_qty = order.qty - (order.filled or 0)
+            if available_qty <= 0:
+                continue
+                
+            execute_qty = min(remaining_qty, available_qty)
+            total_revenue += execute_qty * order.price
+            remaining_qty -= execute_qty
+            
+            if remaining_qty <= 0:
+                break
+        
+        if remaining_qty > 0:
+            return None
+            
+        return total_revenue / qty

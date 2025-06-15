@@ -28,8 +28,7 @@ class TransactionORM(Base):
     __tablename__ = 'transaction'
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    ticker: Mapped[str] = mapped_column(ForeignKey('instrument.ticker'))
+    ticker: Mapped[str]
     amount: Mapped[int]
     price: Mapped[int]
     timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
-    instrument: Mapped["InstrumentORM"] = relationship(back_populates='transactions')

@@ -14,4 +14,3 @@ class InstrumentORM(Base):
     ticker: Mapped[str] = mapped_column(primary_key=True)
     balance: Mapped[List["BalanceORM"]] = relationship(back_populates="instrument", cascade="all, delete-orphan")
     orders: Mapped[List["OrderORM"]] = relationship(back_populates="instrument", cascade="all, delete-orphan")
-    transactions: Mapped[List["TransactionORM"]] = relationship(back_populates="instrument", cascade="all, delete-orphan")
