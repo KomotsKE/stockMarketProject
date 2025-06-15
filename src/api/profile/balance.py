@@ -19,20 +19,20 @@ balance_router = APIRouter(prefix='/api/v1')
 
 @balance_router.get("/balance", tags=["balance"])
 async def get_balances(user: User = Depends(get_user_by_token)) -> Dict[str, int]:
-    user_balance: Dict[str, int] = {}
     async with async_session_factory() as session:
+        # Получаем все инструменты
         instruments = await get_instruments_list()
-        for _, ticker in instruments:
-            user_balance[ticker] = 0
-
+        all_tickers = {ticker for _, ticker in instruments}
+        
+        # Получаем только ненулевые балансы
         balances_result = await session.execute(
-            select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id)
+            select(BalanceORM.ticker, BalanceORM.amount)
+            .where(BalanceORM.user_id == user.id, BalanceORM.amount > 0)
         )
-        balances = balances_result.all()
 
-        for ticker, amount in balances:
-            user_balance[ticker] = amount
-
+        # Создаем словарь только с ненулевыми значениями
+        user_balance = {ticker: amount for ticker, amount in balances_result.all()}
+        
         return user_balance
 
 @balance_router.post("/admin/balance/deposit", tags=["admin","balance"])

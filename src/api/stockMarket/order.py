@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, asc
 from asyncio import gather
@@ -252,7 +252,6 @@ async def cancel_order(order_id: UUID, user: User = Depends(get_user_by_token)):
 
 @order_router.post("/order", response_model=CreateOrderResponse, tags=["order"])
 async def create_order(order_body: MarketOrderBody | LimitOrderBody,
-                        background_tasks: BackgroundTasks,
                         user: User = Depends(get_user_by_token)) -> CreateOrderResponse:
     """
     Создает новый ордер (рыночный или лимитный)
@@ -299,8 +298,7 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
     
     if order.type == OrderType.MARKET:
         await execute_market_order(order, session)
-    else:
-        background_tasks.add_task(match_limit_orders, order.ticker)
+    match_limit_orders(order.ticker)
     
     return CreateOrderResponse(order_id=order.id)
 
