@@ -109,15 +109,17 @@ async def get_orderbook(ticker: TickerStr, limit: AmountInt = 10) -> L2OrderBook
     """
     Возвращает книгу ордеров (стакан) для указанного тикера
     """
-    ask_levels: Dict[float, int] = {}
-    bid_levels: Dict[float, int] = {}
-
     async with async_session_factory() as session:
+
+        ask_levels: Dict[float, int] = {}
+        bid_levels: Dict[float, int] = {}
+
         query = select(OrderORM).where(
             OrderORM.ticker == ticker,
             OrderORM.type == OrderType.LIMIT,
             OrderORM.status.in_([OrderStatus.NEW, OrderStatus.PART_EXEC])
         )
+
         result = await session.execute(query)
         orders = result.scalars().all()
 
@@ -161,6 +163,7 @@ async def get_order(order_id: UUID, user: User = Depends(get_user_by_token)) -> 
                 "user_id": order.user_id,
                 "timestamp": order.timestamp,
             }
+        
         if order.type == OrderType.MARKET:
             body = MarketOrderBody(
                 direction=order.direction,
@@ -182,12 +185,13 @@ async def list_orders(user: User = Depends(get_user_by_token)) -> List[LimitOrde
     """
     Возвращает список всех ордеров пользователя
     """
-    response : List[LimitOrder | MarketOrder] = []
     async with async_session_factory() as session:
+        response : List[LimitOrder | MarketOrder] = []
         query = select(OrderORM).where(OrderORM.user_id == user.id).order_by(OrderORM.timestamp)
         result = await session.execute(query)
         orders = result.scalars().all()
         for order in orders:
+
             base_order_data = {
                 "id": order.id,
                 "status": order.status,
@@ -258,10 +262,12 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
     Создает новый ордер (рыночный или лимитный)
     """
     async with async_session_factory() as session:
+
         instruments = await get_instruments_list()
         valid_tickers = {ticker for _, ticker in instruments}
         if order_body.ticker not in valid_tickers:
             raise HTTPException(status_code=400, detail="Неверный тикер")
+        
         has_balance = await check_balance(
             session=session,
             user_id=user.id,
@@ -277,7 +283,6 @@ async def create_order(order_body: MarketOrderBody | LimitOrderBody,
                 detail="Недостаточно средств или активов для выполнения операции"
             )
         
-        # Создаем ордер
         order = OrderORM(
             id = uuid4(),
             type=order_body.type,
@@ -457,5 +462,7 @@ async def match_limit_orders(ticker: TickerStr):
                         session.add(transaction)
                         if buy_order.status == OrderStatus.EXEC:
                             break
+                else:
+                    break
 
         await session.commit()

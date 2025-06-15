@@ -26,7 +26,7 @@ async def get_balances(user: User = Depends(get_user_by_token)) -> Dict[str, int
             user_balance[ticker] = 0
 
         balances_result = await session.execute(
-            select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id)
+            select(BalanceORM.ticker, BalanceORM.amount).where(BalanceORM.user_id == user.id, BalanceORM.amount > 0)
         )
         balances = balances_result.all()
 
