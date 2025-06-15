@@ -22,10 +22,6 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL_ASYNCPG(self):
         return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASSWORD}@{self.POSTGRES_DB_HOST}:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
-    
-    @property
-    def DATABASE_URL_LOCAL(self):
-        return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASSWORD}@localhost:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
 
     
     @property 
